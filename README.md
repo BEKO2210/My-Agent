@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# my-agent
 
-## Getting Started
+A coding-assistant chat app built on the [21st Agents SDK](https://21st.dev/agents) and Next.js 16.
 
-First, run the development server:
+The agent (`agents/my-agent.ts`) is deployed to the 21st cloud. The Next.js app (`app/`) is the chat client.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Local development
+
+1. Copy the env file and add your 21st API key from <https://21st.dev/agents/api-keys>:
+
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+2. Install and run:
+
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+   App runs at http://localhost:3000.
+
+## Project layout
+
+```
+agents/my-agent.ts          # Agent definition (model, system prompt, tools)
+app/page.tsx                # Chat UI (renders <AgentChat>)
+app/api/an-token/route.ts   # Server-side token exchange
+app/theme.json              # Visual theme for the chat component
+app/layout.tsx              # Root layout, fonts, body styles
+.github/workflows/          # CI/CD
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploying the agent
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npx @21st-sdk/cli login
+npx @21st-sdk/cli deploy
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Run `deploy` again after any change to `agents/`.
 
-## Learn More
+## Deploying the web app to Vercel via GitHub Actions
 
-To learn more about Next.js, take a look at the following resources:
+The workflow at `.github/workflows/deploy-vercel.yml` deploys to Vercel on every push to `main` (production) and on every PR (preview).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+One-time setup:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Create a Vercel project (you can run `npx vercel link` once locally to wire it up, or import the repo in the Vercel dashboard).
+2. In your Vercel project settings, add the env var `API_KEY_21ST` (Production + Preview).
+3. In your GitHub repo settings → **Secrets and variables → Actions**, add three repository secrets:
+   - `VERCEL_TOKEN` — from <https://vercel.com/account/tokens>
+   - `VERCEL_ORG_ID` — from `.vercel/project.json` after `vercel link`
+   - `VERCEL_PROJECT_ID` — from `.vercel/project.json` after `vercel link`
 
-## Deploy on Vercel
+After that, every push to `main` deploys to production.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> **Note:** GitHub Pages cannot host this app. The chat depends on the server route `app/api/an-token/route.ts`, which Pages does not support.
